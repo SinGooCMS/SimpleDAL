@@ -8,7 +8,7 @@ namespace ConsoleTest
 {
     class Program
     {
-        static AbstrctFactory dbo = DataFactory.CreateDataFactory();
+        static IDBFactory dbo = DataFactory.CreateDataFactory();
         static void Main(string[] args)
         {          
             UserInfo userAdd = new UserInfo() { 

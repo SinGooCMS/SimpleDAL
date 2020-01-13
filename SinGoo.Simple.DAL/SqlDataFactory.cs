@@ -13,7 +13,7 @@ namespace SinGoo.Simple.DAL
     /// <summary>
     /// SQL SERVER数据库操作类
     /// </summary>    
-    sealed class SqlDataFactory : AbstrctFactory
+    sealed class SqlDataFactory : IDBFactory
     {
         private string strSQLConnStr = string.Empty; //连接字符串
 
@@ -43,7 +43,7 @@ namespace SinGoo.Simple.DAL
         /// 执行一条sql语句
         /// </summary>
         /// <param name="strSQL"></param>
-        public override bool ExecSQL(string strSQL)
+        public bool ExecSQL(string strSQL)
         {
             if (string.IsNullOrEmpty(strSQL))
                 return false;
@@ -57,7 +57,7 @@ namespace SinGoo.Simple.DAL
         /// <param name="strSQL"></param>
         /// <param name="strSplitter"></param>
         /// <returns></returns>
-        public override bool ExecSQLWithSplit(string strSQL, string strSplitter)
+        public bool ExecSQLWithSplit(string strSQL, string strSplitter)
         {
             try
             {
@@ -100,7 +100,7 @@ namespace SinGoo.Simple.DAL
         /// <param name="strCommandText"></param>
         /// <param name="arrParam"></param>
         /// <returns></returns>
-        public override bool ExecProc(string strCommandText, System.Data.Common.DbParameter[] arrParam)
+        public bool ExecProc(string strCommandText, System.Data.Common.DbParameter[] arrParam)
         {
             return DBBaseHelper.ExecuteNonQueryProc(strCommandText, arrParam) > 0;
         }
@@ -110,7 +110,7 @@ namespace SinGoo.Simple.DAL
         /// <param name="strCommandText"></param>
         /// <param name="arrParam"></param>
         /// <returns></returns>
-        public override object ExecProcReValue(string strCommandText, System.Data.Common.DbParameter[] arrParam)
+        public object ExecProcReValue(string strCommandText, System.Data.Common.DbParameter[] arrParam)
         {
             return DBBaseHelper.ExecuteScalarProc(strCommandText, arrParam);
         }
@@ -120,7 +120,7 @@ namespace SinGoo.Simple.DAL
         /// <param name="strCommandText"></param>
         /// <param name="arrParam"></param>
         /// <returns></returns>
-        public override IDataReader ExecProcReReader(string strCommandText, System.Data.Common.DbParameter[] arrParam)
+        public IDataReader ExecProcReReader(string strCommandText, System.Data.Common.DbParameter[] arrParam)
         {
             return DBBaseHelper.ExecuteReaderProc(strCommandText, arrParam);
         }
@@ -130,7 +130,7 @@ namespace SinGoo.Simple.DAL
         /// <param name="strCommandText"></param>
         /// <param name="arrParam"></param>
         /// <returns></returns>
-        public override DataSet ExecProcReDS(string strCommandText, System.Data.Common.DbParameter[] arrParam)
+        public DataSet ExecProcReDS(string strCommandText, System.Data.Common.DbParameter[] arrParam)
         {
             return DBBaseHelper.ExecuteDataSetProc(strCommandText, arrParam);
         }
@@ -140,7 +140,7 @@ namespace SinGoo.Simple.DAL
         /// <param name="strCommandText"></param>
         /// <param name="arrParam"></param>
         /// <returns></returns>
-        public override DataTable ExecProcReDT(string strCommandText, System.Data.Common.DbParameter[] arrParam)
+        public DataTable ExecProcReDT(string strCommandText, System.Data.Common.DbParameter[] arrParam)
         {
             return DBBaseHelper.ExecuteDataTableProc(strCommandText, arrParam);
         }
@@ -154,13 +154,13 @@ namespace SinGoo.Simple.DAL
         /// </summary>
         /// <param name="strSQL">需要执行的SQL语句</param>
         /// <returns>返回object对象</returns>
-        public override object GetObject(string strSQL)
+        public object GetObject(string strSQL)
         {
             object objTemp = DBBaseHelper.ExecuteScalar(strSQL);
-            if (DBNull.Value == objTemp)
-                return null;
+            if (objTemp != null && DBNull.Value != objTemp)
+                return objTemp;
 
-            return objTemp;
+            return null;
         }
         #endregion
 
@@ -172,7 +172,7 @@ namespace SinGoo.Simple.DAL
         /// <typeparam name="T"></typeparam>
         /// <param name="strSQL"></param>
         /// <returns></returns>
-        public override T GetValue<T>(string strSQL)
+        public T GetValue<T>(string strSQL)
         {
             object objTemp = GetObject(strSQL);
             return null == objTemp ? default(T) : (T)objTemp;
@@ -186,7 +186,7 @@ namespace SinGoo.Simple.DAL
         /// </summary>
         /// <param name="strSQL"></param>
         /// <returns></returns>
-        public override IDataReader GetDataReader(string strSQL)
+        public IDataReader GetDataReader(string strSQL)
         {
             return DBBaseHelper.ExecuteReader(strSQL);
         }
@@ -198,7 +198,7 @@ namespace SinGoo.Simple.DAL
         /// </summary>
         /// <param name="strSQL"></param>
         /// <returns></returns> 
-        public override DataTable GetDataTable(string strSQL)
+        public DataTable GetDataTable(string strSQL)
         {
             return DBBaseHelper.ExecuteDataTable(strSQL);
         }
@@ -211,7 +211,7 @@ namespace SinGoo.Simple.DAL
         /// </summary>
         /// <param name="strSQL"></param>
         /// <returns></returns>
-        public override DataSet GetDataSet(string strSQL)
+        public DataSet GetDataSet(string strSQL)
         {
             return DBBaseHelper.ExecuteDataSet(strSQL);
         }
@@ -220,7 +220,7 @@ namespace SinGoo.Simple.DAL
 
         #region 返回分页内容
 
-        public override DataTable GetPagerDataTable(string strFilter, string strTableName, string strCondition, string strSort, int intPageIndex, int intPageSize, ref int intTotalCount, ref int intTotalPage)
+        public DataTable GetPagerDataTable(string strFilter, string strTableName, string strCondition, string strSort, int intPageIndex, int intPageSize, ref int intTotalCount, ref int intTotalPage)
         {
             DataTable dt = new DataTable();
             using (SqlConnection cn = new SqlConnection(strSQLConnStr))
@@ -262,11 +262,11 @@ namespace SinGoo.Simple.DAL
             }
         }
 
-        public override IList<T> GetPager<T>(string strCondition, string strSort, int intPageIndex, int intPageSize, ref int intTotalCount, ref int intTotalPage)
+        public IList<T> GetPager<T>(string strCondition, string strSort, int intPageIndex, int intPageSize, ref int intTotalCount, ref int intTotalPage) where T : class
         {
             return GetPager<T>("*", strCondition, strSort, intPageIndex, intPageSize, ref intTotalCount, ref intTotalPage);
         }
-        public override IList<T> GetPager<T>(string strFilter, string strCondition, string strSort, int intPageIndex, int intPageSize, ref int intTotalCount, ref int intTotalPage)
+        public IList<T> GetPager<T>(string strFilter, string strCondition, string strSort, int intPageIndex, int intPageSize, ref int intTotalCount, ref int intTotalPage) where T : class
         {
             //返回实体列表
             IList<T> listResult = new List<T>();
@@ -329,7 +329,7 @@ namespace SinGoo.Simple.DAL
         /// <typeparam name="T"></typeparam>
         /// <param name="strSQL">查询语句</param>
         /// <returns></returns>
-        public override T GetModel<T>(string strSQL)
+        public T GetModel<T>(string strSQL) where T : class
         {
             //返回实体
             T tReturn = default(T);
@@ -351,7 +351,7 @@ namespace SinGoo.Simple.DAL
         /// <typeparam name="T"></typeparam>
         /// <param name="reader"></param>
         /// <returns></returns>
-        public override T GetModel<T>(IDataReader reader)
+        public T GetModel<T>(IDataReader reader) where T : class
         {
             //返回实体
             T tReturn = default(T);
@@ -372,7 +372,7 @@ namespace SinGoo.Simple.DAL
         /// <typeparam name="T"></typeparam>
         /// <param name="KeyValue"></param>
         /// <returns></returns>
-        public override T GetModel<T>(object KeyValue)
+        public T GetModel<T>(object KeyValue) where T : class
         {
             string tableName = AttrAssistant.GetTableName(typeof(T));
             string key = AttrAssistant.GetKey(typeof(T));
@@ -390,7 +390,7 @@ namespace SinGoo.Simple.DAL
         /// <typeparam name="T"></typeparam>
         /// <param name="strSQL"></param>
         /// <returns></returns>
-        public override IList<T> GetList<T>(string strSQL)
+        public IList<T> GetList<T>(string strSQL) where T : class
         {
             //返回实体列表
             IList<T> listResult = new List<T>();
@@ -416,7 +416,7 @@ namespace SinGoo.Simple.DAL
         /// <param name="condition"></param>
         /// <param name="topNum"></param>
         /// <returns></returns>
-        public override IList<T> GetList<T>(int topNum = 0, string condition = "", string filter = "*")
+        public IList<T> GetList<T>(int topNum = 0, string condition = "", string filter = "*") where T : class
         {
             string tableName = AttrAssistant.GetTableName(typeof(T));
             StringBuilder builder = new StringBuilder("select ");
@@ -442,12 +442,12 @@ namespace SinGoo.Simple.DAL
         /// </summary>
         /// <param name="strTable"></param>
         /// <returns></returns>
-        public override int? GetCount(string strTable)
+        public int? GetCount(string strTable)
         {
             return GetCount(strTable, "");
         }
 
-        public override int? GetCount(string strTable, string strCondition)
+        public int? GetCount(string strTable, string strCondition)
         {
             return DBBaseHelper.GetRecordCount(strTable, strCondition, "*");
         }
@@ -457,14 +457,14 @@ namespace SinGoo.Simple.DAL
         #endregion
 
         #region ------插入数据------
-        
+
         /// <summary>
         /// 插入数据并返回主键值
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="model"></param>
         /// <returns></returns>
-        public override int InsertModel<T>(T model)
+        public int InsertModel<T>(T model) where T : class
         {
             return InsertModel(model, AttrAssistant.GetTableName(typeof(T)));
         }
@@ -475,7 +475,7 @@ namespace SinGoo.Simple.DAL
         /// <param name="model"></param>
         /// <param name="strTableName"></param>
         /// <returns></returns>
-        public override int InsertModel<T>(T model, string strTableName)
+        public int InsertModel<T>(T model, string strTableName) where T : class
         {
             int intReturnIDKey = new int();
 
@@ -521,7 +521,7 @@ namespace SinGoo.Simple.DAL
         /// <typeparam name="T"></typeparam>
         /// <param name="model"></param>
         /// <returns></returns>
-        public override bool UpdateModel<T>(T model)
+        public bool UpdateModel<T>(T model) where T : class
         {
             Type modelEntityType = model.GetType();
             PropertyInfo[] arrProperty = modelEntityType.GetProperties();
@@ -563,7 +563,7 @@ namespace SinGoo.Simple.DAL
         /// <param name="TableName"></param>
         /// <param name="Condition"></param>
         /// <returns></returns>
-        public override bool DeleteTable(string TableName, string Condition)
+        public bool DeleteTable(string TableName, string Condition)
         {
             string sql = string.Format(" delete from {0} ", TableName);
             if (!string.IsNullOrEmpty(Condition))
@@ -578,7 +578,7 @@ namespace SinGoo.Simple.DAL
         /// <typeparam name="T"></typeparam>
         /// <param name="model"></param>
         /// <returns></returns>
-        public override bool DeleteModel<T>(T model)
+        public bool DeleteModel<T>(T model) where T : class
         {
             //主键值
             int intIDValue = new int();

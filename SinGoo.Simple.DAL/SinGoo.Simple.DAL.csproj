@@ -41,7 +41,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AbstrctFactory.cs">
+    <Compile Include="IDBFactory.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="AttrAssistant.cs">
