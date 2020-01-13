@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Configuration;
 using System.Data;
+using System.Data.SqlClient;
 using System.Data.Common;
 using System.Runtime.InteropServices;
 
@@ -768,6 +769,33 @@ namespace SinGoo.Simple.DAL.Utils
             Internal,
             External
         }
+
+        #region 批量插入
+        public static void BulkInsert(DbDataReader dr, string targetTableName)
+        {
+            using (IDbConnection conn = new SqlConnection(ConnectionString))
+            {
+                conn.Open();
+                using (SqlBulkCopy bulkCopy = new SqlBulkCopy(ConnectionString))
+                {
+                    bulkCopy.DestinationTableName = targetTableName;
+                    bulkCopy.WriteToServer(dr);
+                }
+            }
+        }
+        public static void BulkInsert(DataTable dt, string targetTableName)
+        {
+            using (IDbConnection conn = new SqlConnection(ConnectionString))
+            {
+                conn.Open();
+                using (SqlBulkCopy bulkCopy = new SqlBulkCopy(ConnectionString))
+                {
+                    bulkCopy.DestinationTableName = targetTableName;
+                    bulkCopy.WriteToServer(dt);
+                }
+            }
+        }
+        #endregion
     }
 }
 
