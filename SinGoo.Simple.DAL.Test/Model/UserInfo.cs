@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using SinGoo.Simple.DAL;
 
-namespace ConsoleTest
+namespace SinGoo.Simple.DAL.Test.Model
 {
     [Table("cms_User")]
     public class UserInfo

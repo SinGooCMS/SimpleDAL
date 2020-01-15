@@ -11,12 +11,10 @@ using SinGoo.Simple.DAL.Utils;
 namespace SinGoo.Simple.DAL
 {
     /// <summary>
-    /// SQL SERVER数据库操作类
+    /// 对DBHelper的再次封装
     /// </summary>    
     sealed class SqlDataFactory : IDBFactory
     {
-        private string strSQLConnStr = string.Empty; //连接字符串
-
         /// <summary>
         /// 引用参数
         /// </summary>
@@ -33,9 +31,9 @@ namespace SinGoo.Simple.DAL
         public SqlDataFactory(string strConnString)
         {
             if (!string.IsNullOrEmpty(strConnString))
-                DBBaseHelper.ConnectionString = strSQLConnStr = strConnString; //自定义连接字符串
+                DBBaseHelper.ConnectionString = strConnString; //自定义连接字符串
             else
-                DBBaseHelper.ConnectionString = strSQLConnStr = System.Configuration.ConfigurationManager.ConnectionStrings["ConnStr"].ConnectionString;
+                DBBaseHelper.ConnectionString = ConnStore.DefConnStr; //默认的连接字符串
         }
 
         #region ------执行sql语句------
@@ -222,27 +220,20 @@ namespace SinGoo.Simple.DAL
 
         public DataTable GetPagerDataTable(string strFilter, string strTableName, string strCondition, string strSort, int intPageIndex, int intPageSize, ref int intTotalCount, ref int intTotalPage)
         {
-            DataTable dt = new DataTable();
-            using (SqlConnection cn = new SqlConnection(strSQLConnStr))
-            {
-                cn.Open();
-                using (SqlCommand cm = new SqlCommand())
-                {
-                    cm.Connection = cn;
-                    if (string.IsNullOrEmpty(strCondition))
-                        strCondition = "1=1";
+            if (string.IsNullOrEmpty(strCondition))
+                strCondition = "1=1";
 
-                    //总记录数
-                    intTotalCount = GetCount(strTableName, strCondition) ?? 0;
-                    //总页数
-                    intTotalPage = intTotalCount % intPageSize == 0 ? intTotalCount / intPageSize : (intTotalCount / intPageSize) + 1;
-                    //起始页号
-                    int startPage = (intPageIndex - 1) * intPageSize + 1;
-                    //截止页号
-                    int endPage = intPageIndex * intPageSize;
+            //总记录数
+            intTotalCount = GetCount(strTableName, strCondition) ?? 0;
+            //总页数
+            intTotalPage = intTotalCount % intPageSize == 0 ? intTotalCount / intPageSize : (intTotalCount / intPageSize) + 1;
+            //起始页号
+            int startPage = (intPageIndex - 1) * intPageSize + 1;
+            //截止页号
+            int endPage = intPageIndex * intPageSize;
 
-                    StringBuilder builder = new StringBuilder();
-                    builder.AppendFormat(@"SELECT  {0}
+            StringBuilder builder = new StringBuilder();
+            builder.AppendFormat(@"SELECT  {0}
                                 FROM(SELECT ROW_NUMBER() OVER(ORDER BY {3}) AS RowNum,{0}
                                           FROM  {1}
                                           WHERE {2}
@@ -250,16 +241,7 @@ namespace SinGoo.Simple.DAL
                                 WHERE  RowNum >= {4}   AND RowNum <= {5}
                                 ORDER BY {3}", strFilter, strTableName, strCondition, strSort, startPage, endPage);
 
-                    cm.CommandType = CommandType.Text;
-                    cm.CommandText = builder.ToString();
-
-                    using (SqlDataAdapter da = new SqlDataAdapter(cm))
-                    {
-                        da.Fill(dt);
-                        return dt;
-                    }
-                }
-            }
+            return DBBaseHelper.ExecuteDataTable(builder.ToString());
         }
 
         public IList<T> GetPager<T>(string strCondition, string strSort, int intPageIndex, int intPageSize, ref int intTotalCount, ref int intTotalPage) where T : class
@@ -275,26 +257,20 @@ namespace SinGoo.Simple.DAL
             //表名
             string tableName = AttrAssistant.GetTableName(typeof(T));
 
-            using (SqlConnection cn = new SqlConnection(strSQLConnStr))
-            {
-                cn.Open();
-                using (SqlCommand cm = new SqlCommand())
-                {
-                    cm.Connection = cn;
-                    if (string.IsNullOrEmpty(strCondition))
-                        strCondition = "1=1";
+            if (string.IsNullOrEmpty(strCondition))
+                strCondition = "1=1";
 
-                    //总记录数
-                    intTotalCount = GetCount(tableName, strCondition) ?? 0;
-                    //总页数
-                    intTotalPage = intTotalCount % intPageSize == 0 ? intTotalCount / intPageSize : (intTotalCount / intPageSize) + 1;
-                    //起始页号
-                    int startPage = (intPageIndex - 1) * intPageSize + 1;
-                    //截止页号
-                    int endPage = intPageIndex * intPageSize;
+            //总记录数
+            intTotalCount = GetCount(tableName, strCondition) ?? 0;
+            //总页数
+            intTotalPage = intTotalCount % intPageSize == 0 ? intTotalCount / intPageSize : (intTotalCount / intPageSize) + 1;
+            //起始页号
+            int startPage = (intPageIndex - 1) * intPageSize + 1;
+            //截止页号
+            int endPage = intPageIndex * intPageSize;
 
-                    StringBuilder builder = new StringBuilder();
-                    builder.AppendFormat(@"SELECT  {0}
+            StringBuilder builder = new StringBuilder();
+            builder.AppendFormat(@"SELECT  {0}
                                 FROM(SELECT ROW_NUMBER() OVER(ORDER BY {3}) AS RowNum,{0}
                                           FROM  {1}
                                           WHERE {2}
@@ -302,22 +278,16 @@ namespace SinGoo.Simple.DAL
                                 WHERE  RowNum >= {4}   AND RowNum <= {5}
                                 ORDER BY {3}", strFilter, tableName, strCondition, strSort, startPage, endPage);
 
-                    cm.CommandType = CommandType.Text;
-                    cm.CommandText = builder.ToString();
-
-                    SqlDataReader reader = cm.ExecuteReader(CommandBehavior.CloseConnection);
-                    ReflectionBuilder<T> refBuilder = ReflectionBuilder<T>.CreateBuilder(reader);
-                    while (reader.Read())
-                    {
-                        tItem = refBuilder.Build(reader);
-                        listResult.Add(tItem);
-                    }
-
-                    reader.Close();
-                    return listResult;
-                }
+            var reader = DBBaseHelper.ExecuteReader(builder.ToString());
+            ReflectionBuilder<T> refBuilder = ReflectionBuilder<T>.CreateBuilder(reader);
+            while (reader.Read())
+            {
+                tItem = refBuilder.Build(reader);
+                listResult.Add(tItem);
             }
 
+            reader.Close();
+            return listResult;
         }
         #endregion
 

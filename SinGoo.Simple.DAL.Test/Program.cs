@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using SinGoo.Simple.DAL;
+using SinGoo.Simple.DAL.Test.Model;
 
-namespace ConsoleTest
+namespace SinGoo.Simple.DAL.Test
 {
     class Program
     {
