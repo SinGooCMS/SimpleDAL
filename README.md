@@ -42,6 +42,10 @@ class Program
 
         dbo.DeleteModel<UserInfo>(user);
         Console.WriteLine(string.Format("\r\n删除用户：{0}", user.AutoID));
+        
+        //设置另一个数据库连接
+        dbo.SetConnStr(OtherConnStr);
+        var dt=dbo.GetDataTable();
 
         Console.ReadLine();
     }
