@@ -9,6 +9,8 @@ namespace SinGoo.Simple.DAL
 {
     public interface IDBFactory
     {
+        void SetConnStr(string connStr);
+
         #region ------执行SQL语句------
 
         /// <summary>

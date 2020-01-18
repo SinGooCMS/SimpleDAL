@@ -36,6 +36,15 @@ namespace SinGoo.Simple.DAL
                 DBBaseHelper.ConnectionString = ConnStore.DefConnStr; //默认的连接字符串
         }
 
+        /// <summary>
+        /// 更换连接字符串，操作多个数据库时切换
+        /// </summary>
+        /// <param name="connStr"></param>
+        public void SetConnStr(string connStr)
+        {
+            DBBaseHelper.ConnectionString = connStr;
+        }
+
         #region ------执行sql语句------
         /// <summary>
         /// 执行一条sql语句
