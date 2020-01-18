@@ -45,7 +45,7 @@ class Program
         
         //设置另一个数据库连接,自由切换数据库，而不需要另外new一个实例
         dbo.SetConnStr(OtherConnStr);
-        var dt=dbo.GetDataTable();
+        var dt=dbo.GetDataTable(sql);
 
         Console.ReadLine();
     }
