@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Data;
 using SinGoo.Simple.DAL;
 using SinGoo.Simple.DAL.Test.Model;
 
@@ -53,6 +54,28 @@ namespace SinGoo.Simple.DAL.Test
             {
                 Console.WriteLine(string.Format("会员信息分页列表：{0}的年龄：{1}", item.UserName, item.Age));
             }
+
+            //批量插入数据
+            DataTable dt = new DataTable();
+            dt.Columns.Add("ID", typeof(Int32));
+            dt.Columns.Add("Name", typeof(System.String));
+            dt.Columns.Add("Xinbie", typeof(string));
+            var dr = dt.NewRow();
+            dr["ID"] = 0; //ID是自增字段，这里只是起占位作用
+            dr["Name"] = "小李";
+            dr["Xinbie"] = "男";
+            dt.Rows.Add(dr);
+            var dr2 = dt.NewRow();
+            dr2["ID"] = 0;
+            dr2["Name"] = "阿飞";
+            dr2["Xinbie"] = "男";
+            dt.Rows.Add(dr2);
+            var dr3 = dt.NewRow();
+            dr3["ID"] = 0;
+            dr3["Name"] = "林诗音";
+            dr3["Xinbie"] = "女";
+            dt.Rows.Add(dr3);
+            dbo.BulkInsert<UserInfo>(dt);
 
             dbo.DeleteModel<UserInfo>(user);
             Console.WriteLine(string.Format("\r\n删除用户：{0}", user.AutoID));

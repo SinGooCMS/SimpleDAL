@@ -478,6 +478,64 @@ namespace SinGoo.Simple.DAL
                 return 0;
         }
 
+        #region 批量插入
+
+        /// <summary>
+        /// 大数据批量插入,数据源和目标表字段需要对应
+        /// </summary>
+        /// <param name="dr"></param>
+        /// <param name="targetTableName"></param>
+        public void BulkInsert(IDataReader dr, string targetTableName)
+        {
+            using (IDbConnection conn = new SqlConnection(dbHelper.ConnectionString))
+            {
+                conn.Open();
+                using (SqlBulkCopy bulkCopy = new SqlBulkCopy(dbHelper.ConnectionString))
+                {
+                    bulkCopy.DestinationTableName = targetTableName;
+                    bulkCopy.WriteToServer(dr);                    
+                }
+            }
+        }
+
+        /// <summary>
+        /// 大数据批量插入,数据源和目标表字段需要对应
+        /// </summary>
+        /// <param name="dr"></param>
+        public void BulkInsert<T>(IDataReader dr) where T : class
+        {
+            BulkInsert(dr, AttrAssistant.GetTableName(typeof(T)));
+        }
+
+        /// <summary>
+        /// 大数据批量插入,数据源和目标表字段需要对应
+        /// </summary>
+        /// <param name="dt"></param>
+        /// <param name="targetTableName"></param>
+        public void BulkInsert(DataTable dt, string targetTableName)
+        {
+            using (IDbConnection conn = new SqlConnection(dbHelper.ConnectionString))
+            {
+                conn.Open();
+                using (SqlBulkCopy bulkCopy = new SqlBulkCopy(dbHelper.ConnectionString))
+                {
+                    bulkCopy.DestinationTableName = targetTableName;
+                    bulkCopy.WriteToServer(dt);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 大数据批量插入,数据源和目标表字段需要对应
+        /// </summary>
+        /// <param name="dt"></param>
+        public void BulkInsert<T>(DataTable dt) where T : class
+        {
+            BulkInsert(dt, AttrAssistant.GetTableName(typeof(T)));
+        }
+
+        #endregion
+
         #endregion
 
         #region ------更新数据------
