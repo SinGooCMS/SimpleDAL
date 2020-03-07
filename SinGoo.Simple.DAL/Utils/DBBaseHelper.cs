@@ -8,15 +8,106 @@ using System.Runtime.InteropServices;
 
 namespace SinGoo.Simple.DAL.Utils
 {
+    /// <summary>
+    /// 数据库操作基础类
+    /// </summary>
     public partial class DBBaseHelper
     {
         private static DbProviderFactory _factory = null;
-        private static Hashtable _paramcache = Hashtable.Synchronized(new Hashtable());
         private static IDbProvider _provider = null;
-        private static int _querycount = 0;
         private static object lockHelper = new object();
 
-        private static void AssignParameterValues(DbParameter[] commandParameters, object[] parameterValues)
+        public DBBaseHelper(string connStr)
+        {
+            this.ConnectionString = connStr;
+        }
+
+        #region 参数
+
+        /// <summary>
+        /// 无长度,值参数
+        /// </summary>
+        /// <param name="ParameterName"></param>
+        /// <param name="DbType"></param>
+        /// <param name="ParamDirection"></param>
+        /// <returns></returns>
+        private SqlParameter MakeParameter(string ParameterName, SqlDbType DbType, ParameterDirection ParamDirection)
+        {
+            SqlParameter SqlParam = new SqlParameter(ParameterName, DbType);
+            SqlParam.Direction = ParamDirection;
+            return SqlParam;
+        }
+
+        /// <summary>
+        /// 无长度参数,如int,text等
+        /// </summary>
+        /// <param name="ParameterName"></param>
+        /// <param name="DbType"></param>
+        /// <param name="ParamDirection"></param>
+        /// <param name="Values"></param>
+        /// <returns></returns>
+        private SqlParameter MakeParameter(string ParameterName, SqlDbType DbType, ParameterDirection ParamDirection, object Values)
+        {
+            SqlParameter SqlParam = new SqlParameter(ParameterName, DbType);
+            SqlParam.Direction = ParamDirection;
+            if (!(ParamDirection == ParameterDirection.Output && Values == null)) SqlParam.Value = Values;
+            return SqlParam;
+        }
+
+        /// <summary>
+        /// 有长度参数,如varchar,char等
+        /// </summary>
+        /// <param name="ParameterName"></param>
+        /// <param name="DbType"></param>
+        /// <param name="ParamDirection"></param>
+        /// <param name="ParamSize"></param>
+        /// <param name="Values"></param>
+        /// <returns></returns>
+        private SqlParameter MakeParameter(string ParameterName, SqlDbType DbType, ParameterDirection ParamDirection, int ParamSize, object Values)
+        {
+            SqlParameter SqlParam = new SqlParameter(ParameterName, DbType, ParamSize);
+            SqlParam.Direction = ParamDirection;
+            if (!(ParamDirection == ParameterDirection.Output && Values == null)) SqlParam.Value = Values;
+            return SqlParam;
+        }
+
+        /// <summary>
+        /// 无长度输入参数
+        /// </summary>
+        /// <param name="ParameterName"></param>
+        /// <param name="DbType"></param>
+        /// <param name="Values"></param>
+        /// <returns></returns>
+        public SqlParameter MakeInParameter(string ParameterName, SqlDbType DbType, object Values)
+        {
+            return MakeParameter(ParameterName, DbType, ParameterDirection.Input, Values);
+        }
+
+        /// <summary>
+        /// 有长度输入参数
+        /// </summary>
+        /// <param name="ParameterName"></param>
+        /// <param name="DbType"></param>
+        /// <param name="ParamSize"></param>
+        /// <param name="Values"></param>
+        /// <returns></returns>
+        public SqlParameter MakeInParameter(string ParameterName, SqlDbType DbType, int ParamSize, object Values)
+        {
+            return MakeParameter(ParameterName, DbType, ParameterDirection.Input, ParamSize, Values);
+        }
+
+        /// <summary>
+        /// 无长度输出参数
+        /// </summary>
+        /// <param name="ParameterName"></param>
+        /// <param name="DbType"></param>
+        /// <returns></returns>
+        public SqlParameter MakeOutParameter(string ParameterName, SqlDbType DbType)
+        {
+            return MakeParameter(ParameterName, DbType, ParameterDirection.Output);
+        }
+
+        private void AssignParameterValues(DbParameter[] commandParameters, object[] parameterValues)
         {
             if ((commandParameters != null) && (parameterValues != null))
             {
@@ -52,7 +143,7 @@ namespace SinGoo.Simple.DAL.Utils
             }
         }
 
-        private static void AssignParameterValues(DbParameter[] commandParameters, DataRow dataRow)
+        private void AssignParameterValues(DbParameter[] commandParameters, DataRow dataRow)
         {
             if ((commandParameters != null) && (dataRow != null))
             {
@@ -72,7 +163,7 @@ namespace SinGoo.Simple.DAL.Utils
             }
         }
 
-        private static void AttachParameters(DbCommand command, DbParameter[] parameters)
+        private void AttachParameters(DbCommand command, DbParameter[] parameters)
         {
             if (command == null)
             {
@@ -94,7 +185,7 @@ namespace SinGoo.Simple.DAL.Utils
             }
         }
 
-        private static DbParameter[] CloneParameters(DbParameter[] originalParameters)
+        private DbParameter[] CloneParameters(DbParameter[] originalParameters)
         {
             DbParameter[] parameterArray = new DbParameter[originalParameters.Length];
             int index = 0;
@@ -107,7 +198,7 @@ namespace SinGoo.Simple.DAL.Utils
             return parameterArray;
         }
 
-        private static DbParameter[] DiscoverSpParameterSet(DbConnection connection, string spName, bool includeReturnValueParameter)
+        private DbParameter[] DiscoverSpParameterSet(DbConnection connection, string spName, bool includeReturnValueParameter)
         {
             if (connection == null)
                 throw new Exception("没有连接到数据库或者已断开");
@@ -135,22 +226,25 @@ namespace SinGoo.Simple.DAL.Utils
             return array;
         }
 
-        public static DataSet ExecuteDataSet(string commandText)
+        #endregion
+
+        #region 执行
+        public DataSet ExecuteDataSet(string commandText)
         {
             return ExecuteDataSet(CommandType.Text, commandText, new DbParameter[1]);
         }
 
-        private static DataSet ExecuteDataSet(CommandType commandType, string commandText)
+        private DataSet ExecuteDataSet(CommandType commandType, string commandText)
         {
             return ExecuteDataSet(commandType, commandText, new DbParameter[1]);
         }
 
-        public static DataSet ExecuteDataSet(string commandText, params DbParameter[] parameters)
+        public DataSet ExecuteDataSet(string commandText, params DbParameter[] parameters)
         {
             return ExecuteDataSet(CommandType.Text, commandText, parameters);
         }
 
-        private static DataSet ExecuteDataSet(CommandType commandType, string commandText, params DbParameter[] parameters)
+        private DataSet ExecuteDataSet(CommandType commandType, string commandText, params DbParameter[] parameters)
         {
             if ((ConnectionString == null) || (ConnectionString.Length == 0))
             {
@@ -164,17 +258,17 @@ namespace SinGoo.Simple.DAL.Utils
             }
         }
 
-        private static DataSet ExecuteDataSet(DbConnection connection, CommandType commandType, string commandText)
+        private DataSet ExecuteDataSet(DbConnection connection, CommandType commandType, string commandText)
         {
             return ExecuteDataSet(connection, commandType, commandText);
         }
 
-        public static DataSet ExecuteDataSet(DbTransaction transaction, CommandType commandType, string commandText)
+        public DataSet ExecuteDataSet(DbTransaction transaction, CommandType commandType, string commandText)
         {
             return ExecuteDataSet(transaction, commandType, commandText, new DbParameter[1]);
         }
 
-        private static DataSet ExecuteDataSet(DbConnection connection, CommandType commandType, string commandText, params DbParameter[] parameters)
+        private DataSet ExecuteDataSet(DbConnection connection, CommandType commandType, string commandText, params DbParameter[] parameters)
         {
             if (connection == null)
             {
@@ -188,7 +282,7 @@ namespace SinGoo.Simple.DAL.Utils
                 adapter.SelectCommand = command;
                 DataSet dataSet = new DataSet();
                 adapter.Fill(dataSet);
-                _querycount++;
+                QueryCount++;
                 command.Parameters.Clear();
                 if (mustCloseConnection)
                 {
@@ -198,7 +292,7 @@ namespace SinGoo.Simple.DAL.Utils
             }
         }
 
-        public static DataSet ExecuteDataSet(DbTransaction transaction, CommandType commandType, string commandText, params DbParameter[] parameters)
+        public DataSet ExecuteDataSet(DbTransaction transaction, CommandType commandType, string commandText, params DbParameter[] parameters)
         {
             if (transaction == null)
             {
@@ -221,42 +315,42 @@ namespace SinGoo.Simple.DAL.Utils
             }
         }
 
-        public static DataSet ExecuteDataSetProc(string procName, params DbParameter[] parameters)
+        public DataSet ExecuteDataSetProc(string procName, params DbParameter[] parameters)
         {
             return ExecuteDataSet(CommandType.StoredProcedure, procName, parameters);
         }
 
-        public static DataTable ExecuteDataTable(string commandText)
+        public DataTable ExecuteDataTable(string commandText)
         {
             return ExecuteDataSet(commandText).Tables[0];
         }
 
-        public static DataTable ExecuteDataTable(string commandText, params DbParameter[] parameters)
+        public DataTable ExecuteDataTable(string commandText, params DbParameter[] parameters)
         {
             return ExecuteDataSet(commandText, parameters).Tables[0];
         }
 
-        public static DataTable ExecuteDataTableProc(string procName, params DbParameter[] parameters)
+        public DataTable ExecuteDataTableProc(string procName, params DbParameter[] parameters)
         {
             return ExecuteDataSetProc(procName, parameters).Tables[0];
         }
 
-        public static int ExecuteNonQuery(string commandText)
+        public int ExecuteNonQuery(string commandText)
         {
             return ExecuteNonQuery(CommandType.Text, commandText, new DbParameter[1]);
         }
 
-        public static int ExecuteNonQuery(string commandText, params DbParameter[] parameters)
+        public int ExecuteNonQuery(string commandText, params DbParameter[] parameters)
         {
             return ExecuteNonQuery(CommandType.Text, commandText, parameters);
         }
 
-        public static int ExecuteNonQuery(out int id, string commandText)
+        public int ExecuteNonQuery(out int id, string commandText)
         {
             return ExecuteNonQuery(out id, CommandType.Text, commandText, new DbParameter[1]);
         }
 
-        private static int ExecuteNonQuery(CommandType commandType, string commandText, params DbParameter[] parameters)
+        private int ExecuteNonQuery(CommandType commandType, string commandText, params DbParameter[] parameters)
         {
             if ((ConnectionString == null) || (ConnectionString.Length == 0))
             {
@@ -270,17 +364,17 @@ namespace SinGoo.Simple.DAL.Utils
             }
         }
 
-        public static int ExecuteNonQuery(out int id, string commandText, params DbParameter[] parameters)
+        public int ExecuteNonQuery(out int id, string commandText, params DbParameter[] parameters)
         {
             return ExecuteNonQuery(out id, CommandType.Text, commandText, parameters);
         }
 
-        public static int ExecuteNonQuery(DbTransaction transaction, CommandType commandType, string commandText)
+        public int ExecuteNonQuery(DbTransaction transaction, CommandType commandType, string commandText)
         {
             return ExecuteNonQuery(transaction, commandType, commandText, new DbParameter[1]);
         }
 
-        private static int ExecuteNonQuery(DbConnection connection, CommandType commandType, string commandText, params DbParameter[] parameters)
+        private int ExecuteNonQuery(DbConnection connection, CommandType commandType, string commandText, params DbParameter[] parameters)
         {
             if (connection == null)
             {
@@ -291,7 +385,7 @@ namespace SinGoo.Simple.DAL.Utils
             PrepareCommand(command, connection, null, commandType, commandText, parameters, out mustCloseConnection);
             int num = command.ExecuteNonQuery();
             command.Parameters.Clear();
-            _querycount++;
+            QueryCount++;
             if (mustCloseConnection)
             {
                 connection.Close();
@@ -299,7 +393,7 @@ namespace SinGoo.Simple.DAL.Utils
             return num;
         }
 
-        public static int ExecuteNonQuery(out int id, CommandType commandType, string commandText, params DbParameter[] parameters)
+        public int ExecuteNonQuery(out int id, CommandType commandType, string commandText, params DbParameter[] parameters)
         {
             if ((ConnectionString == null) || (ConnectionString.Length == 0))
             {
@@ -313,12 +407,12 @@ namespace SinGoo.Simple.DAL.Utils
             }
         }
 
-        public static int ExecuteNonQuery(out int id, DbTransaction transaction, CommandType commandType, string commandText)
+        public int ExecuteNonQuery(out int id, DbTransaction transaction, CommandType commandType, string commandText)
         {
             return ExecuteNonQuery(out id, transaction, commandType, commandText, new DbParameter[1]);
         }
 
-        public static int ExecuteNonQuery(DbTransaction transaction, CommandType commandType, string commandText, params DbParameter[] parameters)
+        public int ExecuteNonQuery(DbTransaction transaction, CommandType commandType, string commandText, params DbParameter[] parameters)
         {
             if (transaction == null)
             {
@@ -332,12 +426,12 @@ namespace SinGoo.Simple.DAL.Utils
             bool mustCloseConnection = false;
             PrepareCommand(command, transaction.Connection, transaction, commandType, commandText, parameters, out mustCloseConnection);
             int num = command.ExecuteNonQuery();
-            _querycount++;
+            QueryCount++;
             command.Parameters.Clear();
             return num;
         }
 
-        private static int ExecuteNonQuery(out int id, DbConnection connection, CommandType commandType, string commandText, params DbParameter[] parameters)
+        private int ExecuteNonQuery(out int id, DbConnection connection, CommandType commandType, string commandText, params DbParameter[] parameters)
         {
             if (connection == null)
             {
@@ -351,7 +445,7 @@ namespace SinGoo.Simple.DAL.Utils
             command.CommandType = CommandType.Text;
             command.CommandText = Provider.GetLastIdSql();
             id = (int)command.ExecuteScalar();
-            _querycount++;
+            QueryCount++;
             if (mustCloseConnection)
             {
                 connection.Close();
@@ -359,7 +453,7 @@ namespace SinGoo.Simple.DAL.Utils
             return num;
         }
 
-        private static int ExecuteNonQuery(out int id, DbTransaction transaction, CommandType commandType, string commandText, params DbParameter[] parameters)
+        private int ExecuteNonQuery(out int id, DbTransaction transaction, CommandType commandType, string commandText, params DbParameter[] parameters)
         {
             if (transaction == null)
             {
@@ -373,7 +467,7 @@ namespace SinGoo.Simple.DAL.Utils
             bool mustCloseConnection = false;
             PrepareCommand(command, transaction.Connection, transaction, commandType, commandText, parameters, out mustCloseConnection);
             int num = command.ExecuteNonQuery();
-            _querycount++;
+            QueryCount++;
             command.Parameters.Clear();
             command.CommandType = CommandType.Text;
             command.CommandText = Provider.GetLastIdSql();
@@ -381,32 +475,32 @@ namespace SinGoo.Simple.DAL.Utils
             return num;
         }
 
-        public static int ExecuteNonQueryProc(string procName, params DbParameter[] parameters)
+        public int ExecuteNonQueryProc(string procName, params DbParameter[] parameters)
         {
             return ExecuteNonQuery(CommandType.StoredProcedure, procName, parameters);
         }
 
-        public static int ExecuteNonQueryProc(out int id, string procName, params DbParameter[] parameters)
+        public int ExecuteNonQueryProc(out int id, string procName, params DbParameter[] parameters)
         {
             return ExecuteNonQuery(out id, CommandType.StoredProcedure, procName, parameters);
         }
 
-        public static DbDataReader ExecuteReader(string commandText)
+        public DbDataReader ExecuteReader(string commandText)
         {
             return ExecuteReader(CommandType.Text, commandText);
         }
 
-        private static DbDataReader ExecuteReader(CommandType commandType, string commandText)
+        private DbDataReader ExecuteReader(CommandType commandType, string commandText)
         {
             return ExecuteReader(commandType, commandText, new DbParameter[1]);
         }
 
-        public static DbDataReader ExecuteReader(string commandText, params DbParameter[] parameters)
+        public DbDataReader ExecuteReader(string commandText, params DbParameter[] parameters)
         {
             return ExecuteReader(CommandType.Text, commandText, parameters);
         }
 
-        private static DbDataReader ExecuteReader(CommandType commandType, string commandText, params DbParameter[] parameters)
+        private DbDataReader ExecuteReader(CommandType commandType, string commandText, params DbParameter[] parameters)
         {
             DbDataReader reader;
             if ((ConnectionString == null) || (ConnectionString.Length == 0))
@@ -431,26 +525,24 @@ namespace SinGoo.Simple.DAL.Utils
                 //throw;
                 throw new Exception(ex.Message);
             }
-
-            return null;
         }
 
-        private static DbDataReader ExecuteReader(DbConnection connection, CommandType commandType, string commandText)
+        private DbDataReader ExecuteReader(DbConnection connection, CommandType commandType, string commandText)
         {
             return ExecuteReader(connection, commandType, commandText, new DbParameter[1]);
         }
 
-        public static DbDataReader ExecuteReader(DbTransaction transaction, CommandType commandType, string commandText)
+        public DbDataReader ExecuteReader(DbTransaction transaction, CommandType commandType, string commandText)
         {
             return ExecuteReader(transaction, commandType, commandText, new DbParameter[1]);
         }
 
-        private static DbDataReader ExecuteReader(DbConnection connection, CommandType commandType, string commandText, params DbParameter[] parameters)
+        private DbDataReader ExecuteReader(DbConnection connection, CommandType commandType, string commandText, params DbParameter[] parameters)
         {
             return ExecuteReader(connection, null, commandType, commandText, parameters, DbConnectionOwnerShip.External);
         }
 
-        public static DbDataReader ExecuteReader(DbTransaction transaction, CommandType commandType, string commandText, params DbParameter[] parameters)
+        public DbDataReader ExecuteReader(DbTransaction transaction, CommandType commandType, string commandText, params DbParameter[] parameters)
         {
             if (transaction == null)
             {
@@ -463,7 +555,7 @@ namespace SinGoo.Simple.DAL.Utils
             return ExecuteReader(transaction.Connection, transaction, commandType, commandText, parameters, DbConnectionOwnerShip.External);
         }
 
-        private static DbDataReader ExecuteReader(DbConnection connection, DbTransaction transaction, CommandType commandType, string commandText, DbParameter[] parameters, DbConnectionOwnerShip owership)
+        private DbDataReader ExecuteReader(DbConnection connection, DbTransaction transaction, CommandType commandType, string commandText, DbParameter[] parameters, DbConnectionOwnerShip owership)
         {
             DbDataReader reader2;
             if (connection == null)
@@ -484,7 +576,7 @@ namespace SinGoo.Simple.DAL.Utils
                 {
                     reader = command.ExecuteReader(CommandBehavior.CloseConnection);
                 }
-                _querycount++;
+                QueryCount++;
                 bool flag2 = true;
                 foreach (DbParameter parameter in command.Parameters)
                 {
@@ -510,27 +602,27 @@ namespace SinGoo.Simple.DAL.Utils
             return reader2;
         }
 
-        public static DbDataReader ExecuteReaderProc(string procName, params DbParameter[] parameters)
+        public DbDataReader ExecuteReaderProc(string procName, params DbParameter[] parameters)
         {
             return ExecuteReader(CommandType.StoredProcedure, procName, parameters);
         }
 
-        public static object ExecuteScalar(string commandText)
+        public object ExecuteScalar(string commandText)
         {
             return ExecuteScalar(CommandType.Text, commandText);
         }
 
-        private static object ExecuteScalar(CommandType commandType, string commandText)
+        private object ExecuteScalar(CommandType commandType, string commandText)
         {
             return ExecuteScalar(commandType, commandText, new DbParameter[1]);
         }
 
-        public static object ExecuteScalar(string commandText, params DbParameter[] parameters)
+        public object ExecuteScalar(string commandText, params DbParameter[] parameters)
         {
             return ExecuteScalar(CommandType.Text, commandText, parameters);
         }
 
-        private static object ExecuteScalar(CommandType commandType, string commandText, params DbParameter[] parameters)
+        private object ExecuteScalar(CommandType commandType, string commandText, params DbParameter[] parameters)
         {
             if ((ConnectionString == null) || (ConnectionString.Length == 0))
             {
@@ -544,12 +636,12 @@ namespace SinGoo.Simple.DAL.Utils
             }
         }
 
-        public static object ExecuteScalar(DbTransaction transaction, CommandType commandType, string commandText)
+        public object ExecuteScalar(DbTransaction transaction, CommandType commandType, string commandText)
         {
             return ExecuteScalar(transaction, commandType, commandText, new DbParameter[1]);
         }
 
-        private static object ExecuteScalar(DbConnection connection, CommandType commandType, string commandText, params DbParameter[] parameters)
+        private object ExecuteScalar(DbConnection connection, CommandType commandType, string commandText, params DbParameter[] parameters)
         {
             if (connection == null)
             {
@@ -567,7 +659,7 @@ namespace SinGoo.Simple.DAL.Utils
             return obj2;
         }
 
-        public static object ExecuteScalar(DbTransaction transaction, CommandType commandType, string commandText, params DbParameter[] parameters)
+        public object ExecuteScalar(DbTransaction transaction, CommandType commandType, string commandText, params DbParameter[] parameters)
         {
             if (transaction == null)
             {
@@ -581,97 +673,17 @@ namespace SinGoo.Simple.DAL.Utils
             DbCommand command = Factory.CreateCommand();
             PrepareCommand(command, transaction.Connection, transaction, commandType, commandText, parameters, out mustCloseConnection);
             object obj2 = command.ExecuteScalar();
-            _querycount++;
+            QueryCount++;
             command.Parameters.Clear();
             return obj2;
         }
 
-        public static object ExecuteScalarProc(string procName, params DbParameter[] parameters)
+        public object ExecuteScalarProc(string procName, params DbParameter[] parameters)
         {
             return ExecuteScalar(CommandType.StoredProcedure, procName, parameters);
         }
 
-        public static bool Exists(string commandText)
-        {
-            return Exists(commandText, null);
-        }
-
-        public static bool Exists(string commandText, params DbParameter[] parameters)
-        {
-            return Exists(CommandType.Text, commandText, parameters);
-        }
-
-        private static bool Exists(CommandType commandType, string commandText, params DbParameter[] parameters)
-        {
-            int result = 0;
-            object objTemp = ExecuteScalar(commandType, commandText, parameters);
-            if (objTemp != null && objTemp != DBNull.Value)
-            {
-                if (Int32.TryParse(objTemp.ToString(), out result))
-                    return result>0;
-            }
-
-            return false;
-        }
-
-        public static bool ExistsProc(string procedureName, params DbParameter[] parameters)
-        {
-            return Exists(CommandType.StoredProcedure, procedureName, parameters);
-        }
-
-        public static string FilterBadChar(string strchar)
-        {
-            if (string.IsNullOrEmpty(strchar))
-            {
-                return "";
-            }
-            return strchar.Replace("'", "");
-        }
-
-        public static int GetMaxID(string tableName, string columnName)
-        {
-            int result = 0;
-            object objTemp = ExecuteScalar("SELECT MAX(" + columnName + ") FROM " + tableName);
-            if (objTemp != null && objTemp != DBNull.Value)
-            {
-                if (Int32.TryParse(objTemp.ToString(), out result))
-                    return result;
-            }
-
-            return 0;
-        }
-
-        public static int GetRecordCount(string strTableName, string strCondition, string strIndexField="*")
-        {
-            string sql = string.Format("SELECT COUNT({0}) FROM {1} ", strIndexField, strTableName);
-            if (!string.IsNullOrEmpty(strCondition))
-                sql += " where " + strCondition;
-
-            return (int)ExecuteScalar(sql);
-        }
-
-        public static DbParameter MakeInParam(string ParamName, DbType DbType, int Size, object Value)
-        {
-            return MakeParam(ParamName, DbType, Size, ParameterDirection.Input, Value);
-        }
-
-        public static DbParameter MakeOutParam(string ParamName, DbType DbType, int Size)
-        {
-            return MakeParam(ParamName, DbType, Size, ParameterDirection.Output, null);
-        }
-
-        private static DbParameter MakeParam(string ParamName, DbType DbType, int Size, ParameterDirection Direction, object Value)
-        {
-            DbParameter parameter = Provider.MakeParam(ParamName, DbType, Size);
-            parameter.Direction = Direction;
-            if ((Direction != ParameterDirection.Output) || (Value != null))
-            {
-                parameter.Value = Value;
-            }
-            return parameter;
-        }
-
-        private static void PrepareCommand(DbCommand command, DbConnection connection, DbTransaction transaction, CommandType commandType, string commandText, DbParameter[] parameters, out bool mustCloseConnection)
+        private void PrepareCommand(DbCommand command, DbConnection connection, DbTransaction transaction, CommandType commandType, string commandText, DbParameter[] parameters, out bool mustCloseConnection)
         {
             if (command == null)
             {
@@ -706,14 +718,77 @@ namespace SinGoo.Simple.DAL.Utils
                 AttachParameters(command, parameters);
             }
         }
+
+        #endregion
+
+        #region 扩展功能
+
+        public bool Exists(string commandText)
+        {
+            return Exists(commandText, null);
+        }
+
+        public bool Exists(string commandText, params DbParameter[] parameters)
+        {
+            return Exists(CommandType.Text, commandText, parameters);
+        }
+
+        private bool Exists(CommandType commandType, string commandText, params DbParameter[] parameters)
+        {
+            int result = 0;
+            object objTemp = ExecuteScalar(commandType, commandText, parameters);
+            if (objTemp != null && objTemp != DBNull.Value)
+            {
+                if (Int32.TryParse(objTemp.ToString(), out result))
+                    return result > 0;
+            }
+
+            return false;
+        }
+
+        public bool ExistsProc(string procedureName, params DbParameter[] parameters)
+        {
+            return Exists(CommandType.StoredProcedure, procedureName, parameters);
+        }
+
+        public string FilterBadChar(string strchar)
+        {
+            if (string.IsNullOrEmpty(strchar))
+            {
+                return "";
+            }
+            return strchar.Replace("'", "");
+        }
+
+        public int GetMaxID(string tableName, string columnName)
+        {
+            int result = 0;
+            object objTemp = ExecuteScalar("SELECT MAX(" + columnName + ") FROM " + tableName);
+            if (objTemp != null && objTemp != DBNull.Value)
+            {
+                if (Int32.TryParse(objTemp.ToString(), out result))
+                    return result;
+            }
+
+            return 0;
+        }
+
+        public int GetRecordCount(string strTableName, string strCondition, string strIndexField = "*")
+        {
+            string sql = string.Format("SELECT COUNT({0}) FROM {1} ", strIndexField, strTableName);
+            if (!string.IsNullOrEmpty(strCondition))
+                sql += " where " + strCondition;
+
+            return (int)ExecuteScalar(sql);
+        }
+
+        #endregion
+
+        #region 其它
         /// <summary>
         /// 数据库连接
         /// </summary>
-        public static string ConnectionString
-        {
-            get;
-            set;
-        }
+        public string ConnectionString { get; set; }
 
         public static DbProviderFactory Factory
         {
@@ -743,7 +818,7 @@ namespace SinGoo.Simple.DAL.Utils
                             }
                             catch
                             {
-                                throw new Exception("请检查Config/data.config中ConnectionStrings配置是否正确");
+                                throw new Exception("请检查ConnectionStrings配置是否正确");
                             }
                         }
                     }
@@ -752,48 +827,12 @@ namespace SinGoo.Simple.DAL.Utils
             }
         }
 
-        public static int QueryCount
-        {
-            get
-            {
-                return _querycount;
-            }
-            set
-            {
-                _querycount = value;
-            }
-        }
+        public int QueryCount { get; set; }
 
         private enum DbConnectionOwnerShip
         {
             Internal,
             External
-        }
-
-        #region 批量插入
-        public static void BulkInsert(DbDataReader dr, string targetTableName)
-        {
-            using (IDbConnection conn = new SqlConnection(ConnectionString))
-            {
-                conn.Open();
-                using (SqlBulkCopy bulkCopy = new SqlBulkCopy(ConnectionString))
-                {
-                    bulkCopy.DestinationTableName = targetTableName;
-                    bulkCopy.WriteToServer(dr);
-                }
-            }
-        }
-        public static void BulkInsert(DataTable dt, string targetTableName)
-        {
-            using (IDbConnection conn = new SqlConnection(ConnectionString))
-            {
-                conn.Open();
-                using (SqlBulkCopy bulkCopy = new SqlBulkCopy(ConnectionString))
-                {
-                    bulkCopy.DestinationTableName = targetTableName;
-                    bulkCopy.WriteToServer(dt);
-                }
-            }
         }
         #endregion
     }

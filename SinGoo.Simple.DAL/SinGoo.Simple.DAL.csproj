@@ -14,8 +14,8 @@
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>false</DebugSymbols>
-    <DebugType>none</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>pdbonly</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
@@ -62,9 +62,6 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="RefProperty.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Utils\RequestParameter.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="SafeDataReader.cs">

@@ -9,8 +9,6 @@ namespace SinGoo.Simple.DAL
 {
     public interface IDBFactory
     {
-        void SetConnStr(string connStr);
-
         #region ------执行SQL语句------
 
         /// <summary>
@@ -186,6 +184,7 @@ namespace SinGoo.Simple.DAL
         #endregion
 
         #region 扩展实用查询
+
         /// <summary>
         /// 获取记录数
         /// </summary>
@@ -199,6 +198,7 @@ namespace SinGoo.Simple.DAL
         /// <param name="strCondition"></param>
         /// <returns></returns>
         int? GetCount(string strTable, string strCondition);
+
         #endregion
 
         #endregion

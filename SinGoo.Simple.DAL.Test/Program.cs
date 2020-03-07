@@ -11,14 +11,23 @@ namespace SinGoo.Simple.DAL.Test
     {
         static IDBFactory dbo = DataFactory.CreateDataFactory();
         static void Main(string[] args)
-        {          
+        {
+            /*
+            UserInfo userAdd2 = new UserInfo()
+            {
+                UserName = "无名氏"
+            };
+            int Id2 = dbo.InsertModel<UserInfo>(userAdd2);
+            Console.WriteLine(string.Format("添加一个用户[无名氏]，返回ID：{0}\r\n", Id2));
+            */
+            
             UserInfo userAdd = new UserInfo() { 
                 UserName="刘备",
                 Gander="男",
                 Age=56
             };
             int Id = dbo.InsertModel<UserInfo>(userAdd);
-            Console.WriteLine(string.Format("添加一个用户[刘备]，返回ID：{0}\r\n", Id));
+            Console.WriteLine(string.Format("添加一个用户[刘备]，返回ID：{0}\r\n", Id));            
 
             var user=dbo.GetModel<UserInfo>(Id);
             Console.WriteLine(string.Format("根据主键读取对象：key={0}的用户名：{1},年龄：{2}\r\n", Id, user.UserName, user.Age));
@@ -47,7 +56,7 @@ namespace SinGoo.Simple.DAL.Test
 
             dbo.DeleteModel<UserInfo>(user);
             Console.WriteLine(string.Format("\r\n删除用户：{0}", user.AutoID));
-
+            
             Console.ReadLine();
         }
     }

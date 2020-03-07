@@ -4,6 +4,9 @@ using System.Reflection;
 
 namespace SinGoo.Simple.DAL
 {
+    /// <summary>
+    /// 安全的DataReader
+    /// </summary>
     public class SafeDataReader : IDataReader, IDisposable, IDataRecord
     {
         private IDataReader _dataReader;

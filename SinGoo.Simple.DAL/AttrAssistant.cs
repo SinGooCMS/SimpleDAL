@@ -24,7 +24,7 @@ namespace SinGoo.Simple.DAL
         }
 
         /// <summary>
-        /// 只支持单主键（一般主键ID是自增的）
+        /// 只支持单主键（主键ID是自增的）
         /// </summary>
         /// <param name="pi"></param>
         /// <returns></returns>
@@ -35,7 +35,7 @@ namespace SinGoo.Simple.DAL
         }
 
         /// <summary>
-        /// 只支持单主键（一般主键ID是自增的）
+        /// 只支持单主键（主键ID是自增的）
         /// </summary>
         /// <param name="pi"></param>
         /// <returns></returns>

@@ -15,14 +15,11 @@ namespace SinGoo.Simple.DAL
     /// </summary>    
     sealed class SqlDataFactory : IDBFactory
     {
-        /// <summary>
-        /// 引用参数
-        /// </summary>
-        RequestParameter param = new RequestParameter();
+        DBBaseHelper dbHelper = null;
 
         public SqlDataFactory()
         {
-            //
+            dbHelper = new DBBaseHelper(ConnStore.DefConnStr); //默认的连接字符串
         }
         /// <summary>
         /// 自定义的连接字符串
@@ -31,18 +28,9 @@ namespace SinGoo.Simple.DAL
         public SqlDataFactory(string strConnString)
         {
             if (!string.IsNullOrEmpty(strConnString))
-                DBBaseHelper.ConnectionString = strConnString; //自定义连接字符串
+                dbHelper = new DBBaseHelper(strConnString); //自定义连接字符串
             else
-                DBBaseHelper.ConnectionString = ConnStore.DefConnStr; //默认的连接字符串
-        }
-
-        /// <summary>
-        /// 更换连接字符串，操作多个数据库时切换
-        /// </summary>
-        /// <param name="connStr"></param>
-        public void SetConnStr(string connStr)
-        {
-            DBBaseHelper.ConnectionString = connStr;
+                dbHelper = new DBBaseHelper(ConnStore.DefConnStr); //默认的连接字符串
         }
 
         #region ------执行sql语句------
@@ -55,7 +43,7 @@ namespace SinGoo.Simple.DAL
             if (string.IsNullOrEmpty(strSQL))
                 return false;
 
-            return DBBaseHelper.ExecuteNonQuery(strSQL) > 0;
+            return dbHelper.ExecuteNonQuery(strSQL) > 0;
         }
 
         /// <summary>
@@ -109,7 +97,7 @@ namespace SinGoo.Simple.DAL
         /// <returns></returns>
         public bool ExecProc(string strCommandText, System.Data.Common.DbParameter[] arrParam)
         {
-            return DBBaseHelper.ExecuteNonQueryProc(strCommandText, arrParam) > 0;
+            return dbHelper.ExecuteNonQueryProc(strCommandText, arrParam) > 0;
         }
         /// <summary>
         /// 执行存储过程并返回值
@@ -119,7 +107,7 @@ namespace SinGoo.Simple.DAL
         /// <returns></returns>
         public object ExecProcReValue(string strCommandText, System.Data.Common.DbParameter[] arrParam)
         {
-            return DBBaseHelper.ExecuteScalarProc(strCommandText, arrParam);
+            return dbHelper.ExecuteScalarProc(strCommandText, arrParam);
         }
         /// <summary>
         /// 执行存储过程获取datareader
@@ -129,7 +117,7 @@ namespace SinGoo.Simple.DAL
         /// <returns></returns>
         public IDataReader ExecProcReReader(string strCommandText, System.Data.Common.DbParameter[] arrParam)
         {
-            return DBBaseHelper.ExecuteReaderProc(strCommandText, arrParam);
+            return dbHelper.ExecuteReaderProc(strCommandText, arrParam);
         }
         /// <summary>
         /// 执行存储过程获取dataset
@@ -139,7 +127,7 @@ namespace SinGoo.Simple.DAL
         /// <returns></returns>
         public DataSet ExecProcReDS(string strCommandText, System.Data.Common.DbParameter[] arrParam)
         {
-            return DBBaseHelper.ExecuteDataSetProc(strCommandText, arrParam);
+            return dbHelper.ExecuteDataSetProc(strCommandText, arrParam);
         }
         /// <summary>
         /// 执行存储过程获取datatable
@@ -149,7 +137,7 @@ namespace SinGoo.Simple.DAL
         /// <returns></returns>
         public DataTable ExecProcReDT(string strCommandText, System.Data.Common.DbParameter[] arrParam)
         {
-            return DBBaseHelper.ExecuteDataTableProc(strCommandText, arrParam);
+            return dbHelper.ExecuteDataTableProc(strCommandText, arrParam);
         }
         #endregion
 
@@ -163,7 +151,7 @@ namespace SinGoo.Simple.DAL
         /// <returns>返回object对象</returns>
         public object GetObject(string strSQL)
         {
-            object objTemp = DBBaseHelper.ExecuteScalar(strSQL);
+            object objTemp = dbHelper.ExecuteScalar(strSQL);
             if (objTemp != null && DBNull.Value != objTemp)
                 return objTemp;
 
@@ -195,7 +183,7 @@ namespace SinGoo.Simple.DAL
         /// <returns></returns>
         public IDataReader GetDataReader(string strSQL)
         {
-            return DBBaseHelper.ExecuteReader(strSQL);
+            return dbHelper.ExecuteReader(strSQL);
         }
         #endregion
 
@@ -207,7 +195,7 @@ namespace SinGoo.Simple.DAL
         /// <returns></returns> 
         public DataTable GetDataTable(string strSQL)
         {
-            return DBBaseHelper.ExecuteDataTable(strSQL);
+            return dbHelper.ExecuteDataTable(strSQL);
         }
 
         #endregion
@@ -220,7 +208,7 @@ namespace SinGoo.Simple.DAL
         /// <returns></returns>
         public DataSet GetDataSet(string strSQL)
         {
-            return DBBaseHelper.ExecuteDataSet(strSQL);
+            return dbHelper.ExecuteDataSet(strSQL);
         }
 
         #endregion
@@ -250,7 +238,7 @@ namespace SinGoo.Simple.DAL
                                 WHERE  RowNum >= {4}   AND RowNum <= {5}
                                 ORDER BY {3}", strFilter, strTableName, strCondition, strSort, startPage, endPage);
 
-            return DBBaseHelper.ExecuteDataTable(builder.ToString());
+            return dbHelper.ExecuteDataTable(builder.ToString());
         }
 
         public IList<T> GetPager<T>(string strCondition, string strSort, int intPageIndex, int intPageSize, ref int intTotalCount, ref int intTotalPage) where T : class
@@ -287,7 +275,7 @@ namespace SinGoo.Simple.DAL
                                 WHERE  RowNum >= {4}   AND RowNum <= {5}
                                 ORDER BY {3}", strFilter, tableName, strCondition, strSort, startPage, endPage);
 
-            var reader = DBBaseHelper.ExecuteReader(builder.ToString());
+            var reader = dbHelper.ExecuteReader(builder.ToString());
             ReflectionBuilder<T> refBuilder = ReflectionBuilder<T>.CreateBuilder(reader);
             while (reader.Read())
             {
@@ -428,7 +416,7 @@ namespace SinGoo.Simple.DAL
 
         public int? GetCount(string strTable, string strCondition)
         {
-            return DBBaseHelper.GetRecordCount(strTable, strCondition, "*");
+            return dbHelper.GetRecordCount(strTable, strCondition, "*");
         }
 
         #endregion
@@ -483,7 +471,7 @@ namespace SinGoo.Simple.DAL
             builderSQL.Append(builderParams.ToString() + " ) ");
             builderSQL.Append(";select @@IDENTITY;"); //返回最新的ID
 
-            object objTemp = DBBaseHelper.ExecuteScalar(" insert into " + strTableName + " ( " + builderSQL.ToString(), listParams.ToArray());
+            object objTemp = dbHelper.ExecuteScalar(" insert into " + strTableName + " ( " + builderSQL.ToString(), listParams.ToArray());
             if (int.TryParse(objTemp == null ? string.Empty : objTemp.ToString(), out intReturnIDKey))
                 return intReturnIDKey;
             else
@@ -529,7 +517,7 @@ namespace SinGoo.Simple.DAL
                 builderSQL.Append(" where " + key + "=" + intIDValue);
             }
 
-            return DBBaseHelper.ExecuteNonQuery(" update " + AttrAssistant.GetTableName(typeof(T)) + " set " + builderSQL.ToString(), listParams.ToArray()) > 0;
+            return dbHelper.ExecuteNonQuery(" update " + AttrAssistant.GetTableName(typeof(T)) + " set " + builderSQL.ToString(), listParams.ToArray()) > 0;
         }
 
         #endregion
@@ -548,7 +536,7 @@ namespace SinGoo.Simple.DAL
             if (!string.IsNullOrEmpty(Condition))
                 sql += string.Format(" where {0} ", Condition); ;
 
-            return DBBaseHelper.ExecuteNonQuery(sql, null) > 0;
+            return dbHelper.ExecuteNonQuery(sql, null) > 0;
         }
 
         /// <summary>
