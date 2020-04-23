@@ -13,15 +13,6 @@ namespace SinGoo.Simple.DAL.Test
         static IDBFactory dbo = DataFactory.CreateDataFactory();
         static void Main(string[] args)
         {
-            /*
-            UserInfo userAdd2 = new UserInfo()
-            {
-                UserName = "无名氏"
-            };
-            int Id2 = dbo.InsertModel<UserInfo>(userAdd2);
-            Console.WriteLine(string.Format("添加一个用户[无名氏]，返回ID：{0}\r\n", Id2));
-            */
-            
             UserInfo userAdd = new UserInfo() { 
                 UserName="刘备",
                 Gander="男",

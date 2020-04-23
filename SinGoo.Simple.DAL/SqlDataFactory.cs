@@ -231,7 +231,7 @@ namespace SinGoo.Simple.DAL
 
             StringBuilder builder = new StringBuilder();
             builder.AppendFormat(@"SELECT  {0}
-                                FROM(SELECT ROW_NUMBER() OVER(ORDER BY {3}) AS RowNum,{0}
+                                FROM(SELECT ROW_NUMBER() OVER(ORDER BY {3}) AS RowNum,*
                                           FROM  {1}
                                           WHERE {2}
                                         ) AS result
@@ -268,7 +268,7 @@ namespace SinGoo.Simple.DAL
 
             StringBuilder builder = new StringBuilder();
             builder.AppendFormat(@"SELECT  {0}
-                                FROM(SELECT ROW_NUMBER() OVER(ORDER BY {3}) AS RowNum,{0}
+                                FROM(SELECT ROW_NUMBER() OVER(ORDER BY {3}) AS RowNum,*
                                           FROM  {1}
                                           WHERE {2}
                                         ) AS result
