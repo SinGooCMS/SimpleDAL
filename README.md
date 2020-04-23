@@ -39,13 +39,31 @@ class Program
         {
             Console.WriteLine(string.Format("会员信息分页列表：{0}的年龄：{1}", item.UserName, item.Age));
         }
+        
+        //批量插入数据
+        DataTable dt = new DataTable();
+        dt.Columns.Add("ID", typeof(Int32));
+        dt.Columns.Add("Name", typeof(System.String));
+        dt.Columns.Add("Xinbie", typeof(string));
+        var dr = dt.NewRow();
+        dr["ID"] = 0; //ID是自增字段，这里只是起占位作用
+        dr["Name"] = "小李";
+        dr["Xinbie"] = "男";
+        dt.Rows.Add(dr);
+        var dr2 = dt.NewRow();
+        dr2["ID"] = 0;
+        dr2["Name"] = "阿飞";
+        dr2["Xinbie"] = "男";
+        dt.Rows.Add(dr2);
+        var dr3 = dt.NewRow();
+        dr3["ID"] = 0;
+        dr3["Name"] = "林诗音";
+        dr3["Xinbie"] = "女";
+        dt.Rows.Add(dr3);
+        dbo.BulkInsert<UserInfo>(dt);
 
         dbo.DeleteModel<UserInfo>(user);
         Console.WriteLine(string.Format("\r\n删除用户：{0}", user.AutoID));
-        
-        //设置另一个数据库连接,自由切换数据库，而不需要另外new一个实例
-        dbo.SetConnStr(OtherConnStr);
-        var dt=dbo.GetDataTable(sql);
 
         Console.ReadLine();
     }
